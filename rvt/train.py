@@ -141,6 +141,7 @@ def experiment(rank, cmd_args, devices, port):
     ddp = len(devices) > 1
     ddp_utils.setup(rank, world_size=len(devices), port=port)
 
+
     exp_cfg = exp_cfg_mod.get_cfg_defaults()
     if cmd_args.exp_cfg_path != "":
         exp_cfg.merge_from_file(cmd_args.exp_cfg_path)
@@ -167,15 +168,20 @@ def experiment(rank, cmd_args, devices, port):
     BATCH_SIZE_TRAIN = exp_cfg.bs
     NUM_TRAIN = 100
     # to match peract, iterations per epoch
-    TRAINING_ITERATIONS = int(10000 // (exp_cfg.bs * len(devices) / 16))
+    TRAINING_ITERATIONS = int(100 // (exp_cfg.bs * len(devices) / 16))
     EPOCHS = exp_cfg.epochs
-    TRAIN_REPLAY_STORAGE_DIR = "replay/replay_train"
-    TEST_REPLAY_STORAGE_DIR = "replay/replay_val"
-    log_dir = get_logdir(cmd_args, exp_cfg)
+    TRAIN_REPLAY_STORAGE_DIR = "replay/replay_train_1/"
+    TEST_REPLAY_STORAGE_DIR = "replay/replay_val/"
+    log_dir = get_logdir(cmd_args, exp_cfg)     # NOTE: logdir 会存储模型和参数？
+    print(f"Log dir: {log_dir}")
+    # input("debug")
+
     tasks = get_tasks(exp_cfg)
     print("Training on {} tasks: {}".format(len(tasks), tasks))
 
-    DATA_FOLDER='/home/ishika/peract_dir/peract/data/train_100'
+    # DATA_FOLDER='/home/ishika/peract_dir/peract/data/train_100'
+    # NOTE: change here - set our data !
+    DATA_FOLDER = "/home/d632/ColosseumChallenge/train_dataset/"
 
     t_start = time.time()
     get_dataset_func = lambda: get_dataset(
@@ -237,6 +243,8 @@ def experiment(rank, cmd_args, devices, port):
 
     start_epoch = 0
     end_epoch = EPOCHS
+
+    #checkpoint的代码在这里
     if exp_cfg.resume != "":
         agent_path = exp_cfg.resume
         print(f"Recovering model and checkpoint from {exp_cfg.resume}")
@@ -271,8 +279,12 @@ def experiment(rank, cmd_args, devices, port):
 
         if rank == 0:
             # TODO: add logic to only save some models
-            save_agent(agent, f"{log_dir}/model_{i}.pth", i)
-            save_agent(agent, f"{log_dir}/model_last.pth", i)
+            save_freq = 5
+            comments = '25_mask_new_2100'
+            if i % save_freq == 0:
+                save_agent(agent, f"{log_dir}/model_{i}_{comments}.pth", i)
+            #save_agent(agent, f"{log_dir}/model_{i}.pth", i)
+            #save_agent(agent, f"{log_dir}/model_last.pth", i)
         i += 1
 
     if rank == 0:
@@ -293,7 +305,7 @@ if __name__ == "__main__":
     parser.add_argument("--exp_cfg_opts", type=str, default="")
 
     parser.add_argument("--log-dir", type=str, default="runs")
-    parser.add_argument("--with-eval", action="store_true", default=False)
+    parser.add_argument("--with-eval", action="store_true", default=False)      # TODO: add eval
 
     cmd_args = parser.parse_args()
     del (
@@ -304,7 +316,7 @@ if __name__ == "__main__":
     devices = [int(x) for x in devices]
 
     port = (random.randint(0, 3000) % 3000) + 27000
-    # mp.spawn(experiment, args=(cmd_args, devices, port), nprocs=len(devices), join=True)
+    mp.spawn(experiment, args=(cmd_args, devices, port), nprocs=len(devices), join=True)
 
-    experiment(0, cmd_args, devices, port)
+    #experiment(0, cmd_args, devices, port)
 

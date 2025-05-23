@@ -8,6 +8,9 @@ import shutil
 import torch
 import clip
 from multiprocessing import Manager, Process
+import yaml
+
+
 
 
 from rvt.libs.peract.helpers.utils import extract_obs
@@ -24,6 +27,14 @@ from rvt.utils.peract_utils import (
 )
 from yarr.replay_buffer.wrappers.pytorch_replay_buffer import PyTorchReplayBuffer
 
+def normalize_task_weights(raw_scores: dict, total_weight: float = 20.0) -> dict:
+    total_score = sum(raw_scores.values())
+    if total_score == 0:
+        raise ValueError("总倾向分数为0，无法归一化")
+    return {
+        task: (score / total_score) * total_weight
+        for task, score in raw_scores.items()
+    }
 
 def get_dataset(
     tasks,
@@ -122,12 +133,21 @@ def get_dataset(
         # [t.join() for t in processes]
 
 
+        # adaptive num_train
+
+        with open("/home/d632/ColosseumChallenge/test/rvt_colosseum/rvt/configs/task_scores.yaml", "r") as f:
+            raw_scores = yaml.safe_load(f)
+        
+        normalized_weights = normalize_task_weights(raw_scores, total_weight=20.0)
+
+
+
         fill_replay(
             replay=train_replay_buffer,
             task=task,
             task_replay_storage_folder=train_replay_storage_folder,
             start_idx=0,
-            num_demos=NUM_TRAIN,
+            num_demos=NUM_TRAIN*int(normalized_weights[task]),
             demo_augmentation=True,
             demo_augmentation_every_n=DEMO_AUGMENTATION_EVERY_N,
             cameras=CAMERAS,

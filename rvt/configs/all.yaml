@@ -1,11 +1,11 @@
 exp_id: rvt
 tasks: all
-bs: 3
-num_workers: 3
-epochs: 15
+bs: 6
+num_workers: 4
+epochs: 60
 sample_distribution_mode: task_uniform
 peract:
-  lr: 1e-4
+  lr: 5e-5 # 1e-4
   warmup_steps: 2000
   optimizer_type: lamb
   lr_cos_dec: True
@@ -13,3 +13,6 @@ peract:
   transform_augmentation_rpy: [0.0, 0.0, 45.0]
 rvt:
   place_with_mean: False
+resume: /home/d632/ColosseumChallenge/test/rvt_colosseum/rvt/runs/rvt_bs_4_NW_16/model_25.pth
+# save_freq: 5
+# comments: 25_mask
