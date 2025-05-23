@@ -20,6 +20,18 @@ If you find our work useful, please consider citing:
 
 ## Getting Started
 
+## Robot-Collosseum Challenge
+
+### Evaluate on test
+
+- **Step 1:**
+- Download the checkpoints file，and place it in runs/rvt_bs_4_NW_16/
+- run sh run_variations.sh to get the variation score.
+
+- The total variation score on all 20 tasks and 14 variations can be found in the score sheet.
+
+### Train process
+
 ### Install RVT
 - Tested (Recommended) Versions: Python 3.8. We used CUDA 11.1. 
 
@@ -98,6 +110,7 @@ processes_per_gpu=3
 bash run_eval_variations.sh $min_var_num $max_var_num $total_processes $processes_per_gpu
 ```
 This file launches parallel evaluation processes. Adjust the number of processes to run in parallel based on GPU number and size availability. The ```task_list``` can be edited inside ```run_eval_variations.sh``` to run specific task or variation number.
+
 
 ## Using the library:
 
